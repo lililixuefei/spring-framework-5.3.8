@@ -64,10 +64,14 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * Create a new AnnotationConfigApplicationContext that needs to be populated
 	 * through {@link #register} calls and then manually {@linkplain #refresh refreshed}.
 	 */
+	// 从这个构造函数可以顺便提一句：如果你仅仅是这样ApplicationContext applicationContext = new AnnotationConfigApplicationContext()
+	// 容器是不会启动的（也就是不会执行refresh()的），这时候需要自己之后再手动启动容器
 	public AnnotationConfigApplicationContext() {
 		StartupStep createAnnotatedBeanDefReader = this.getApplicationStartup().start("spring.context.annotated-bean-reader.create");
+		// AnnotatedBeanDefinitionReader是一个读取注解的Bean读取器，这里将this传了进去。
 		this.reader = new AnnotatedBeanDefinitionReader(this);
 		createAnnotatedBeanDefReader.end();
+		// ClassPathBeanDefinitionScanner是一个扫描指定类路径中注解Bean定义的扫描器，在它初始化的时候，会初始化一些需要被扫描的注解，初始化用于加载包下的资源的Loader。
 		this.scanner = new ClassPathBeanDefinitionScanner(this);
 	}
 
@@ -89,7 +93,9 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
 		this();
+		// 把该配置类（们）注册进来
 		register(componentClasses);
+		// 容器启动核心方法
 		refresh();
 	}
 
@@ -182,6 +188,7 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
 		StartupStep scanPackages = this.getApplicationStartup().start("spring.context.base-packages.scan")
 				.tag("packages", () -> Arrays.toString(basePackages));
+		// 核心在这个scan方法里，见下面
 		this.scanner.scan(basePackages);
 		scanPackages.end();
 	}
