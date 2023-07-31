@@ -454,10 +454,11 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 						// 读取类的 注解信息 和 类信息 ，两大信息储存到  MetadataReader
 						MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
 
-						// 根据TypeFilter过滤排除组件。因为AppConfig没有标准@Component或者子注解，所以肯定不属于候选组件  返回false
-						// 注意：这里一般(默认处理的情况下)标注了默认注解的才会true，什么叫默认注解呢？就是@Component或者派生注解。还有javax....的，这里省略啦
+						// 这里做了两件事：
+						// 1. 是否需要初始化为spring bean，即是否有 @Component、@Service等注解
+						// 2. 查看配置类是否有@Conditional一系列的注解，然后是否满足注册Bean的条件
 						if (isCandidateComponent(metadataReader)) {
-							// 把符合条件的 类转换成 BeanDefinition
+							// 将 metadataReader 转换为 ScannedGenericBeanDefinition，这也是BeanDefinition家族中的一员
 							ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
 							sbd.setSource(resource);
 							// 再次判断 如果是实体类 返回true,如果是抽象类，但是抽象方法 被 @Lookup 注解注释返回true （注意 这个和上面那个是重载的方法）
@@ -520,7 +521,9 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 			}
 		}
 		for (TypeFilter tf : this.includeFilters) {
+			// 这里判断是否需要托管到spring容器
 			if (tf.match(metadataReader, getMetadataReaderFactory())) {
+				// 判断是否有@Conditional一系列的注解
 				return isConditionMatch(metadataReader);
 			}
 		}

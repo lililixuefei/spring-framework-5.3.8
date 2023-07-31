@@ -93,6 +93,7 @@ final class MergedAnnotationsCollection implements MergedAnnotations {
 	}
 
 	private boolean isPresent(Object requiredType, boolean directOnly) {
+		// 判断 annotations 里有没有出现 @Component
 		for (MergedAnnotation<?> annotation : this.annotations) {
 			Class<? extends Annotation> type = annotation.getType();
 			if (type == requiredType || type.getName().equals(requiredType)) {
@@ -100,6 +101,7 @@ final class MergedAnnotationsCollection implements MergedAnnotations {
 			}
 		}
 		if (!directOnly) {
+			// 判断 mappings 里有没有出现 @Component
 			for (AnnotationTypeMappings mappings : this.mappings) {
 				for (int i = 1; i < mappings.size(); i++) {
 					AnnotationTypeMapping mapping = mappings.get(i);
