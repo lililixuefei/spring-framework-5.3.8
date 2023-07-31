@@ -199,6 +199,7 @@ class ConfigurationClassParser {
 	protected final void parse(@Nullable String className, String beanName) throws IOException {
 		Assert.notNull(className, "No bean class name for configuration class bean definition");
 		MetadataReader reader = this.metadataReaderFactory.getMetadataReader(className);
+		// 又调回 processConfigurationClass(...) 方法了
 		processConfigurationClass(new ConfigurationClass(reader, beanName), DEFAULT_EXCLUSION_FILTER);
 	}
 
@@ -207,6 +208,7 @@ class ConfigurationClassParser {
 	}
 
 	protected final void parse(AnnotationMetadata metadata, String beanName) throws IOException {
+		// ConfigurationClass：metadata与beanName的包装类
 		processConfigurationClass(new ConfigurationClass(metadata, beanName), DEFAULT_EXCLUSION_FILTER);
 	}
 
@@ -226,16 +228,13 @@ class ConfigurationClassParser {
 
 
 	protected void processConfigurationClass(ConfigurationClass configClass, Predicate<String> filter) throws IOException {
-		// ConfigurationCondition继承自Condition接口
-		// ConfigurationPhase枚举类型的作用：ConfigurationPhase的作用就是根据条件来判断是否加载这个配置类
-		// 两个值：PARSE_CONFIGURATION 若条件不匹配就不加载此@Configuration
-		// REGISTER_BEAN：无论如何，所有@Configurations都将被解析。
+		// 判断是否需要跳过处理，针对于 @Conditional 注解，判断是否满足条件
 		if (this.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) {
 			return;
 		}
 
-		// 如果这个配置类已经存在了,后面又被@Import进来了~~~会走这里 然后做属性合并~
 		ConfigurationClass existingClass = this.configurationClasses.get(configClass);
+		// 判断是否解析过，解析过就不解析了，与解析内容关系不大，省略
 		if (existingClass != null) {
 			if (configClass.isImported()) {
 				if (existingClass.isImported()) {
@@ -256,7 +255,8 @@ class ConfigurationClassParser {
 		// 请注意此处：while递归，只要方法不返回null，就会一直do下去~~~~~~~~
 		SourceClass sourceClass = asSourceClass(configClass, filter);
 		do {
-			// doProcessConfigurationClass这个方法是解析配置文件的核心方法，此处不做详细分析
+			// doXxx(...) 方法才是真正干活的
+			// 如果返回的内容不为空，下面会再次循环
 			sourceClass = doProcessConfigurationClass(configClass, sourceClass, filter);
 		}
 		while (sourceClass != null);
@@ -303,21 +303,31 @@ class ConfigurationClassParser {
 		}
 
 		// Process any @ComponentScan annotations
+		// 处理 @ComponentScan/@ComponentScans 注解
+		// 获取配置类上的 @ComponentScan/@ComponentScans 注解
 		Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);
-		if (!componentScans.isEmpty() &&
-				!this.conditionEvaluator.shouldSkip(sourceClass.getMetadata(), ConfigurationPhase.REGISTER_BEAN)) {
+		// 如果没有打上ComponentScan，或者被@Condition条件跳过，就不再进入这个if
+		if (!componentScans.isEmpty() && !this.conditionEvaluator.shouldSkip(sourceClass.getMetadata(), ConfigurationPhase.REGISTER_BEAN)) {
+			// 循环处理componentScans，也就是配置类上的所有@ComponentScan注解的内容
 			for (AnnotationAttributes componentScan : componentScans) {
 				// The config class is annotated with @ComponentScan -> perform the scan immediately
+				// 3.2 componentScanParser.parse(...)：具体解析componentScan的操作
+				// componentScan就是@ComponentScan上的具体内容，
+				// sourceClass.getMetadata().getClassName()就是配置类的名称
 				Set<BeanDefinitionHolder> scannedBeanDefinitions =
 						this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
 				// Check the set of scanned definitions for any further config classes and parse recursively if needed
+				// 3.3 循环得到的 BeanDefinition，如果对应的类是配置类，递归调用parse(...)方法
+				// componentScan引入的类可能有被@Bean标记的方法，或者有@ComponentScan注解
 				for (BeanDefinitionHolder holder : scannedBeanDefinitions) {
 					BeanDefinition bdCand = holder.getBeanDefinition().getOriginatingBeanDefinition();
 					if (bdCand == null) {
 						bdCand = holder.getBeanDefinition();
 					}
+					// 判断BeanDefinition对应的类是否为配置类
 					if (ConfigurationClassUtils.checkConfigurationClassCandidate(bdCand, this.metadataReaderFactory)) {
+						// 对得到的类，调用parse(...)方法，再次进行解析
 						parse(bdCand.getBeanClassName(), holder.getBeanName());
 					}
 				}
@@ -350,6 +360,8 @@ class ConfigurationClassParser {
 		processInterfaces(configClass, sourceClass);
 
 		// Process superclass, if any
+		// 7. 返回配置类的父类，会在 processConfigurationClass(...) 方法的下一次循环时解析
+		// sourceClass.getMetadata()就是配置类
 		if (sourceClass.getMetadata().hasSuperClass()) {
 			String superclass = sourceClass.getMetadata().getSuperClassName();
 			if (superclass != null && !superclass.startsWith("java") &&

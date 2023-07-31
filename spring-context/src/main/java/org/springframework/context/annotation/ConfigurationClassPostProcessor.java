@@ -350,7 +350,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		do {
 			StartupStep processConfig = this.applicationStartup.start("spring.context.config-classes.parse");
 
-			// 核心方法：具体详解如下
+			// 核心方法如：解析@Component，@PropertySources，@ComponentScans，@ImportResource等注解
+			// 注：这里是一次性解析所有的candidates
 			parser.parse(candidates);
 			// 校验 配置类不能使final的，因为需要使用CGLIB生成代理对象，见postProcessBeanFactory方法
 			parser.validate();
@@ -366,13 +367,14 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 						this.importBeanNameGenerator, parser.getImportRegistry());
 			}
 
-			// 此处注意：调用了ConfigurationClassBeanDefinitionReader的loadBeanDefinitionsd的加载配置文件里面的@Bean/@Import们，具体讲解请参见下面
+			// 4. 处理本次解析的类、就是把@Import引入的类、配置类中带@Bean的方法、@ImportResource引入的资源等转换成BeanDefinition
 			// 这个方法是非常重要的，因为它决定了向容器注册Bean定义信息的顺序问题~~~
 			this.reader.loadBeanDefinitions(configClasses);
 
 			alreadyParsed.addAll(configClasses);
 			processConfig.tag("classCount", () -> String.valueOf(configClasses.size())).end();
 
+			// 解析完成后，会把candidates的清空，接下来会把新添加的、未解析过的Full配置类添加到candidates中
 			candidates.clear();
 
 			// 如果registry中注册的bean的数量 大于 之前获得的数量,则意味着在解析过程中又新加入了很多,那么就需要对其进行解继续解析
@@ -384,11 +386,9 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 					alreadyParsedClasses.add(configurationClass.getMetadata().getClassName());
 				}
 				for (String candidateName : newCandidateNames) {
-					// 这一步挺有意思：若老的oldCandidateNames不包含。也就是说你是新进来的候选的Bean定义们，那就进一步的进行一个处理
-					// 比如这里的DelegatingWebMvcConfiguration，他就是新进的，因此它继续往下走
-					// 这个@Import进来的配置类最终会被ConfigurationClassPostProcessor这个后置处理器的postProcessBeanFactory 方法，进行处理和cglib增强
 					if (!oldCandidateNames.contains(candidateName)) {
 						BeanDefinition bd = registry.getBeanDefinition(candidateName);
+						// 如果新加的类为配置类，且未解析过，就把它添加到candidates中，等待下次循环解析
 						if (ConfigurationClassUtils.checkConfigurationClassCandidate(bd, this.metadataReaderFactory) &&
 								!alreadyParsedClasses.contains(bd.getBeanClassName())) {
 							candidates.add(new BeanDefinitionHolder(bd, candidateName));
