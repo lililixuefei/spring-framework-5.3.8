@@ -119,6 +119,8 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws BeansException {
+		// 判断是否已经存在BeanFactory，存在则销毁所有Beans，并且关闭BeanFactory
+		// 避免重复加载BeanFactory
 		if (hasBeanFactory()) {
 			destroyBeans();
 			closeBeanFactory();
@@ -197,6 +199,7 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 * @see org.springframework.beans.factory.support.DefaultListableBeanFactory#setAllowCircularReferences
 	 * @see org.springframework.beans.factory.support.DefaultListableBeanFactory#setAllowRawInjectionDespiteWrapping
 	 */
+	// 创建的时候就是new了一个工厂：DefaultListableBeanFactory   这个时候工厂里面所有东西都是默认值，很多还没有完成初始化属性的设置呢
 	protected DefaultListableBeanFactory createBeanFactory() {
 		return new DefaultListableBeanFactory(getInternalParentBeanFactory());
 	}
