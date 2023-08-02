@@ -964,6 +964,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	public void addBeanPostProcessor(BeanPostProcessor beanPostProcessor) {
 		Assert.notNull(beanPostProcessor, "BeanPostProcessor must not be null");
 		// Remove from old position, if any
+		// 先进行移除，因此多次注册beanPostProcessors也只存在一个
 		this.beanPostProcessors.remove(beanPostProcessor);
 		// Add to end of list
 		this.beanPostProcessors.add(beanPostProcessor);
