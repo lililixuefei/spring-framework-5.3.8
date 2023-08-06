@@ -103,6 +103,7 @@ public class InjectionMetadata {
 		for (InjectedElement element : this.injectedElements) {
 			Member member = element.getMember();
 			if (!beanDefinition.isExternallyManagedConfigMember(member)) {
+				// 注册到 beanDefinition
 				beanDefinition.registerExternallyManagedConfigMember(member);
 				checkedElements.add(element);
 			}
@@ -115,7 +116,10 @@ public class InjectionMetadata {
 		Collection<InjectedElement> elementsToIterate =
 				(checkedElements != null ? checkedElements : this.injectedElements);
 		if (!elementsToIterate.isEmpty()) {
+			// 这里的 InjectedElement，就是在 AutowiredAnnotationBeanPostProcessor#findAutowiringMetadata
+			// 中查找到的，field 会封装为 AutowiredFieldElement，method 会会封装为 AutowiredMethodElement
 			for (InjectedElement element : elementsToIterate) {
+				// 主要的方法，还是在InjectedElement#inject里
 				element.inject(target, beanName, pvs);
 			}
 		}
@@ -221,7 +225,6 @@ public class InjectionMetadata {
 		 */
 		protected void inject(Object target, @Nullable String requestingBeanName, @Nullable PropertyValues pvs)
 				throws Throwable {
-
 			if (this.isField) {
 				Field field = (Field) this.member;
 				ReflectionUtils.makeAccessible(field);

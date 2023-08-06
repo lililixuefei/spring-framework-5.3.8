@@ -427,6 +427,7 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 			if (this.externallyManagedConfigMembers == null) {
 				this.externallyManagedConfigMembers = new HashSet<>(1);
 			}
+			// 往set集合中添加一条记录
 			this.externallyManagedConfigMembers.add(configMember);
 		}
 	}
