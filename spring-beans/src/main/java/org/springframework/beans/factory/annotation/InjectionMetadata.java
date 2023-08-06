@@ -113,8 +113,8 @@ public class InjectionMetadata {
 
 	public void inject(Object target, @Nullable String beanName, @Nullable PropertyValues pvs) throws Throwable {
 		Collection<InjectedElement> checkedElements = this.checkedElements;
-		Collection<InjectedElement> elementsToIterate =
-				(checkedElements != null ? checkedElements : this.injectedElements);
+		// 如果checkedElements存在，则使用checkedElements，否则使用injectedElements
+		Collection<InjectedElement> elementsToIterate = (checkedElements != null ? checkedElements : this.injectedElements);
 		if (!elementsToIterate.isEmpty()) {
 			// 这里的 InjectedElement，就是在 AutowiredAnnotationBeanPostProcessor#findAutowiringMetadata
 			// 中查找到的，field 会封装为 AutowiredFieldElement，method 会会封装为 AutowiredMethodElement

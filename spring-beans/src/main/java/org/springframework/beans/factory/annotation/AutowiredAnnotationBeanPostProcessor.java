@@ -675,7 +675,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			// 拿到这个字段名
 			Field field = (Field) this.member;
 			Object value;
-			// 大多数情况下，这里都是false
+			// 如果缓存中已经存在，则直接从缓存中解析属性
 			if (this.cached) {
 				try {
 					value = resolvedCachedArgument(beanName, this.cachedFieldValue);
@@ -695,6 +695,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 
 		@Nullable
 		private Object resolveFieldValue(Field field, Object bean, @Nullable String beanName) {
+			// 将field封装成DependencyDescriptor
 			DependencyDescriptor desc = new DependencyDescriptor(field, this.required);
 			desc.setContainingClass(bean.getClass());
 			Set<String> autowiredBeanNames = new LinkedHashSet<>(1);
@@ -702,6 +703,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			TypeConverter typeConverter = beanFactory.getTypeConverter();
 			Object value;
 			try {
+				// 解析当前属性所匹配的bean实例，并把解析到的bean实例的beanName存储在autowiredBeanNames中
 				value = beanFactory.resolveDependency(desc, beanName, autowiredBeanNames, typeConverter);
 			} catch (BeansException ex) {
 				throw new UnsatisfiedDependencyException(null, beanName, new InjectionPoint(field), ex);
@@ -709,7 +711,9 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			synchronized (this) {
 				if (!this.cached) {
 					Object cachedFieldValue = null;
+					// value不为空或者required为true
 					if (value != null || this.required) {
+						// 如果属性依赖注入的bean不止一个（Array,Collection,Map），缓存cachedFieldValue放的是DependencyDescriptor
 						cachedFieldValue = desc;
 						registerDependentBeans(beanName, autowiredBeanNames);
 						// 因为是按照类型注入，所以肯定只能指导一个这个的依赖Bean，否则上面解析就已经报错了
@@ -717,6 +721,8 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 							String autowiredBeanName = autowiredBeanNames.iterator().next();
 							// 这里是来处理放置缓存的字段值
 							if (beanFactory.containsBean(autowiredBeanName) &&
+									// @Autowired标识属性类型和Bean的类型要匹配，因此Array,Collection,Map类型的属性不支持缓存属性Bean名称
+									// 检查autowiredBeanName对应的bean的类型是否为field的类型
 									beanFactory.isTypeMatch(autowiredBeanName, field.getType())) {
 								cachedFieldValue = new ShortcutDependencyDescriptor(
 										desc, autowiredBeanName, field.getType());
@@ -724,6 +730,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 						}
 					}
 					this.cachedFieldValue = cachedFieldValue;
+					// 缓存标识设为true
 					this.cached = true;
 				}
 			}
