@@ -70,8 +70,8 @@ import org.springframework.util.StringUtils;
  * @author Phillip Webb
  * @author Sam Brannen
  * @author Sebastien Deleuze
- * @since 3.0
  * @see ConfigurationClassParser
+ * @since 3.0
  */
 class ConfigurationClassBeanDefinitionReader {
 
@@ -106,8 +106,8 @@ class ConfigurationClassBeanDefinitionReader {
 	 * that will be used to populate the given {@link BeanDefinitionRegistry}.
 	 */
 	ConfigurationClassBeanDefinitionReader(BeanDefinitionRegistry registry, SourceExtractor sourceExtractor,
-			ResourceLoader resourceLoader, Environment environment, BeanNameGenerator importBeanNameGenerator,
-			ImportRegistry importRegistry) {
+										   ResourceLoader resourceLoader, Environment environment, BeanNameGenerator importBeanNameGenerator,
+										   ImportRegistry importRegistry) {
 
 		this.registry = registry;
 		this.sourceExtractor = sourceExtractor;
@@ -131,6 +131,7 @@ class ConfigurationClassBeanDefinitionReader {
 	}
 
 	/**
+	 * 从ConfigurationClass里面真正的加载Bean定义信息~~~
 	 * Read a particular {@link ConfigurationClass}, registering bean definitions
 	 * for the class itself and all of its {@link Bean} methods.
 	 */
@@ -146,13 +147,16 @@ class ConfigurationClassBeanDefinitionReader {
 			return;
 		}
 
+		// 如果这个配置类是被@Import的，那就第一个执行了~~~
 		if (configClass.isImported()) {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
+		// 加载标注了@Bean的~~
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
 
+		// 解析@ImportedResource里面具体的Bean定义信息~~~
 		loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());
 		loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());
 	}
@@ -227,13 +231,11 @@ class ConfigurationClassBeanDefinitionReader {
 			// static @Bean method
 			if (configClass.getMetadata() instanceof StandardAnnotationMetadata) {
 				beanDef.setBeanClass(((StandardAnnotationMetadata) configClass.getMetadata()).getIntrospectedClass());
-			}
-			else {
+			} else {
 				beanDef.setBeanClassName(configClass.getMetadata().getClassName());
 			}
 			beanDef.setUniqueFactoryMethodName(methodName);
-		}
-		else {
+		} else {
 			// instance @Bean method
 			beanDef.setFactoryBeanName(configClass.getBeanName());
 			beanDef.setUniqueFactoryMethodName(methodName);
@@ -313,8 +315,7 @@ class ConfigurationClassBeanDefinitionReader {
 					ccbd.setNonUniqueFactoryMethodName(ccbd.getFactoryMethodMetadata().getMethodName());
 				}
 				return true;
-			}
-			else {
+			} else {
 				return false;
 			}
 		}
@@ -340,7 +341,7 @@ class ConfigurationClassBeanDefinitionReader {
 		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("Skipping bean definition for %s: a definition for bean '%s' " +
-					"already exists. This top-level bean definition is considered as an override.",
+							"already exists. This top-level bean definition is considered as an override.",
 					beanMethod, beanName));
 		}
 		return true;
@@ -351,17 +352,18 @@ class ConfigurationClassBeanDefinitionReader {
 
 		Map<Class<?>, BeanDefinitionReader> readerInstanceCache = new HashMap<>();
 
+		// 因为可以导入多个资源  所以这里遍历
 		importedResources.forEach((resource, readerClass) -> {
 			// Default reader selection necessary?
+			// 从这里能够看出来，若我们自己没有指定BeanDefinitionReader，那它最终默认会采用XmlBeanDefinitionReader
+			// ~~~~~这就是为什么默认情况下，只支持导入xml文件的原因~~~~~
 			if (BeanDefinitionReader.class == readerClass) {
 				if (StringUtils.endsWithIgnoreCase(resource, ".groovy")) {
 					// When clearly asking for Groovy, that's what they'll get...
 					readerClass = GroovyBeanDefinitionReader.class;
-				}
-				else if (shouldIgnoreXml) {
+				} else if (shouldIgnoreXml) {
 					throw new UnsupportedOperationException("XML support disabled");
-				}
-				else {
+				} else {
 					// Primarily ".xml" files but for any other extension as well
 					readerClass = XmlBeanDefinitionReader.class;
 				}
@@ -371,6 +373,7 @@ class ConfigurationClassBeanDefinitionReader {
 			if (reader == null) {
 				try {
 					// Instantiate the specified BeanDefinitionReader
+					// 拿到入有一个入参为BeanDefinitionRegistry的构造函数~~
 					reader = readerClass.getConstructor(BeanDefinitionRegistry.class).newInstance(this.registry);
 					// Delegate the current ResourceLoader to it if possible
 					if (reader instanceof AbstractBeanDefinitionReader) {
@@ -379,14 +382,15 @@ class ConfigurationClassBeanDefinitionReader {
 						abdr.setEnvironment(this.environment);
 					}
 					readerInstanceCache.put(readerClass, reader);
-				}
-				catch (Throwable ex) {
+				} catch (Throwable ex) {
 					throw new IllegalStateException(
 							"Could not instantiate BeanDefinitionReader class [" + readerClass.getName() + "]");
 				}
 			}
 
 			// TODO SPR-6310: qualify relative path locations as done in AbstractContextLoader.modifyLocations
+			// 处理classpath:spring-beans.xml这种资源加载进来~~
+			// 最终委托给的是`PathMatchingResourcePatternResolver`来加载这个资源，所以支持classpath*  也支持ant风格的通配符
 			reader.loadBeanDefinitions(resource);
 		});
 	}
@@ -423,7 +427,7 @@ class ConfigurationClassBeanDefinitionReader {
 		}
 
 		public ConfigurationClassBeanDefinition(RootBeanDefinition original,
-				ConfigurationClass configClass, MethodMetadata beanMethodMetadata, String derivedBeanName) {
+												ConfigurationClass configClass, MethodMetadata beanMethodMetadata, String derivedBeanName) {
 			super(original);
 			this.annotationMetadata = configClass.getMetadata();
 			this.factoryMethodMetadata = beanMethodMetadata;

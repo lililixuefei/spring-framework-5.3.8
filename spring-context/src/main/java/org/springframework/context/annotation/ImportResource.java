@@ -45,9 +45,9 @@ import org.springframework.core.annotation.AliasFor;
  * @author Chris Beams
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @since 3.0
  * @see Configuration
  * @see Import
+ * @since 3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -55,7 +55,9 @@ import org.springframework.core.annotation.AliasFor;
 public @interface ImportResource {
 
 	/**
+	 * 路径支持${}这样动态取值~~~~   也支持ant风格的匹配  classpath*也是木有问题的
 	 * Alias for {@link #locations}.
+	 *
 	 * @see #locations
 	 * @see #reader
 	 */
@@ -68,14 +70,16 @@ public @interface ImportResource {
 	 * {@code file:}, etc.
 	 * <p>Consult the Javadoc for {@link #reader} for details on how resources
 	 * will be processed.
-	 * @since 4.2
+	 *
 	 * @see #value
 	 * @see #reader
+	 * @since 4.2
 	 */
 	@AliasFor("value")
 	String[] locations() default {};
 
 	/**
+	 * 上面说了，一般都不需要自定义，因为一般情况下我们都只会导入xml文件
 	 * {@link BeanDefinitionReader} implementation to use when processing
 	 * resources specified via the {@link #value} attribute.
 	 * <p>By default, the reader will be adapted to the resource path specified:
@@ -83,6 +87,7 @@ public @interface ImportResource {
 	 * {@link org.springframework.beans.factory.groovy.GroovyBeanDefinitionReader GroovyBeanDefinitionReader};
 	 * whereas, all other resources will be processed with an
 	 * {@link org.springframework.beans.factory.xml.XmlBeanDefinitionReader XmlBeanDefinitionReader}.
+	 *
 	 * @see #value
 	 */
 	Class<? extends BeanDefinitionReader> reader() default BeanDefinitionReader.class;
