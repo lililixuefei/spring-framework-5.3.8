@@ -27,10 +27,17 @@ import org.springframework.beans.factory.config.BeanDefinition;
 public interface BeanNameGenerator {
 
 	/**
+	 * BeanNameGenerator
+	 * 为bean定义生成bean名称的策略接口。
+	 * BeanNameGenerator接口位于 org.springframework.beans.factory.support 包下面，
+	 * 只声明了一个方法，接受两个参数：definition 被生成名字的BeanDefinition实例；registry 生成名字后注册进的BeanDefinitionRegistry。
+	 * BeanNameGenerator有两个实现版本，DefaultBeanNameGenerator和AnnotationBeanNameGenerator。
+	 * 其中DefaultBeanNameGenerator是给资源文件加载bean时使用（BeanDefinitionReader中使用）；AnnotationBeanNameGenerator是为了处理注解生成bean name的情况
 	 * Generate a bean name for the given bean definition.
+	 *
 	 * @param definition the bean definition to generate a name for
-	 * @param registry the bean definition registry that the given definition
-	 * is supposed to be registered with
+	 * @param registry   the bean definition registry that the given definition
+	 *                   is supposed to be registered with
 	 * @return the generated bean name
 	 */
 	String generateBeanName(BeanDefinition definition, BeanDefinitionRegistry registry);
