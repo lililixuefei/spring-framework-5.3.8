@@ -26,6 +26,9 @@ import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.lang.Nullable;
 
 /**
+ *
+ * https://fangshixiang.blog.csdn.net/article/details/88651128
+ *
  * Extension of the {@link org.springframework.beans.factory.BeanFactory}
  * interface to be implemented by bean factories that are capable of
  * autowiring, provided that they want to expose this functionality for
@@ -125,6 +128,11 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 	//-------------------------------------------------------------------------
 
 	/**
+	 * 	注意这个createBean和下面的createBean的不同
+	 * 	JavaDoc：It does <i>not</> imply traditional by-name or by-type autowiring of properties;
+	 * 	也就是说它只管给你创建Bean，但是不管给你根据Name或者Type进行注入哦
+	 * 	当然，你可以显示在对应属性上指定@Autowired注解，让他也可以达到相同的效果
+	 *
 	 * Fully create a new bean instance of the given class.
 	 * <p>Performs full initialization of the bean, including all applicable
 	 * {@link BeanPostProcessor BeanPostProcessors}.

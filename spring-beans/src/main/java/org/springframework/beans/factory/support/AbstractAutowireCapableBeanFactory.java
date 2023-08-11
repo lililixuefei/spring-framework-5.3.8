@@ -329,8 +329,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	public <T> T createBean(Class<T> beanClass) throws BeansException {
 		// Use prototype bean definition, to avoid registering bean as dependent bean.
 		RootBeanDefinition bd = new RootBeanDefinition(beanClass);
+		// 这里看到了，采用的不是单例，而是prototype
 		bd.setScope(SCOPE_PROTOTYPE);
 		bd.allowCaching = ClassUtils.isCacheSafe(beanClass, getBeanClassLoader());
+		// doc说得很明白，这里返回值永远不可能为null。除非调用者强制return null
+		// 注意的是:这里BeanName就是beanClass.getName()
 		return (T) createBean(beanClass.getName(), bd, null);
 	}
 
@@ -494,6 +497,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	//---------------------------------------------------------------------
 
 	/**
+	 * // 最终都调用到了下面这个createBean方法。它也是AbstractBeanFactory提供的一个抽象方法
+	 * // 最终也由AbstractAutowireCapableBeanFactory去实现的。 我们熟悉的doGetBean()方法，最终也是调用它来创建实例对象  只是doGetBean()把单例对象都缓存起来了
+	 * // 这个方法很单纯：创建一个实例，然后初始化他（给属性们赋值），然后return出去即可
+	 *
 	 * Central method of this class: creates a bean instance,
 	 * populates the bean instance, applies post-processors, etc.
 	 *
@@ -552,6 +559,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// 这里又是一个核心逻辑：doCreateBean 创建Bean
 		try {
+			// 重点来了。它是本类的一个protected方法，专门用于处理创建Bean的过程（包括属性赋值之类的）
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isTraceEnabled()) {
 				logger.trace("Finished creating instance of bean '" + beanName + "'");

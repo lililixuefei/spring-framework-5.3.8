@@ -29,6 +29,7 @@ import org.springframework.lang.Nullable;
 public interface ConversionService {
 
 	/**
+	 * 特别说明：若是Map、集合、数组转换时。即使下面方法convert转换抛出了异常，这里也得返回true  因为Spring希望调用者处理这个异常：ConversionException
 	 * Return {@code true} if objects of {@code sourceType} can be converted to the {@code targetType}.
 	 * <p>If this method returns {@code true}, it means {@link #convert(Object, Class)} is capable
 	 * of converting an instance of {@code sourceType} to {@code targetType}.
@@ -65,6 +66,7 @@ public interface ConversionService {
 	boolean canConvert(@Nullable TypeDescriptor sourceType, TypeDescriptor targetType);
 
 	/**
+	 * 注意此处：转换的source都是对象，target只需要类型即可~~~
 	 * Convert the given {@code source} to the specified {@code targetType}.
 	 * @param source the source object to convert (may be {@code null})
 	 * @param targetType the target type to convert to (required)

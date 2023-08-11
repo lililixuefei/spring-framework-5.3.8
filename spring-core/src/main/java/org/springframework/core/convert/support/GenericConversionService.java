@@ -64,11 +64,14 @@ import org.springframework.util.StringUtils;
 public class GenericConversionService implements ConfigurableConversionService {
 
 	/**
+	 * 啥都不做，但是呢conversion is not required，相当于占位的意思
 	 * General NO-OP converter used when conversion is not required.
 	 */
 	private static final GenericConverter NO_OP_CONVERTER = new NoOpConverter("NO_OP");
 
 	/**
+	 * // 当转换器缓存中没有任何匹配时，它上场
+	 * // 请不要把它直接return，用null代替返回
 	 * Used as a cache entry when no converter is available.
 	 * This converter is never returned.
 	 */

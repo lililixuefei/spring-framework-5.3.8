@@ -33,6 +33,7 @@ public interface ConverterRegistry {
 	void addConverter(Converter<?, ?> converter);
 
 	/**
+	 * 添加一个 Converter 实例，并指定其源和目标类型
 	 * Add a plain converter to this registry.
 	 * The convertible source/target type pair is specified explicitly.
 	 * <p>Allows for a Converter to be reused for multiple distinct pairs without
@@ -54,6 +55,7 @@ public interface ConverterRegistry {
 	void addConverterFactory(ConverterFactory<?, ?> factory);
 
 	/**
+	 * 移除方法只有一个：它是面向s和t来做移除的~~~~ 删除所有匹配指定源和目标类型的 Converter
 	 * Remove any converters from {@code sourceType} to {@code targetType}.
 	 * @param sourceType the source type
 	 * @param targetType the target type
