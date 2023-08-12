@@ -18,7 +18,8 @@ public class AnnotationApplication {
 	public static void main(String[] args) {
 		ApplicationContext context = new AnnotationConfigApplicationContext(AnnotationApplication.class);
 		String2IntegerDataConverterTest integerDataConverterTest = context.getBean("string2IntegerDataConverterTest", String2IntegerDataConverterTest.class);
-		System.out.println(integerDataConverterTest.getTen());  // 控制台 100
+		// 控制台 100
+		System.out.println(integerDataConverterTest.getTen());
 	}
 
 	@Bean
